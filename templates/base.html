@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{title}}</title>
+<meta name="description" content="{{description}}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Schibsted+Grotesk:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{root}}css/site.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-head">
+  <a class="brand" href="{{root}}">{{name}}</a>
+  <nav aria-label="Main">
+    <a href="{{root}}#detections">Detections</a>
+    <a href="{{root}}writeups/">Write-ups</a>
+    <a href="{{root}}about/">About</a>
+  </nav>
+</header>
+<main id="main">
+{{content}}
+</main>
+<footer class="site-foot">
+  <p>{{name}}</p>
+  <p class="foot-links">{{contact_links}}</p>
+</footer>
+</body>
+</html>

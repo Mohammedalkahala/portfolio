@@ -1,0 +1,4 @@
+[
+  {"project": "SigmaHQ", "title": "ScreenConnect client spawns script host; Run key set to launch VBScript", "url": "https://github.com/SigmaHQ/sigma/pull/6615", "ref": "#6615", "status": "In review"},
+  {"project": "Atomic Red Team", "title": "T1059.005: RMM client spawns a staged VBScript chain", "url": "https://github.com/redcanaryco/atomic-red-team/pull/3495", "ref": "#3495", "status": "In review"}
+]

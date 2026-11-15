@@ -1,0 +1,28 @@
+[
+  {
+    "date": "2026-11-13",
+    "title": "Rogue ScreenConnect spawning a script host",
+    "source": "Huntress",
+    "source_url": "https://www.huntress.com/blog/rogue-screenconnect-installations",
+    "area": "Windows endpoint, remote access abuse",
+    "attack": "ScreenConnect client → wscript.exe running 1.vbs–4.vbs, PowerShell stage, Run-key persistence",
+    "rules": "9 Wazuh rules, 2 Sigma rules",
+    "result": "Pass",
+    "detail": "Core chain caught; 6 bypass variants tested, 2 got past the obvious rule and are now covered; also caught without Sysmon",
+    "writeup": "rogue-screenconnect",
+    "code": "https://github.com/Mohammedalkahala/purpleloop/tree/main/detections/huntress-rmm-wsh"
+  },
+  {
+    "date": "2026-11-08",
+    "title": "regreSSHion pre-auth timeout flood",
+    "source": "CVE-2024-6387",
+    "source_url": "https://nvd.nist.gov/vuln/detail/CVE-2024-6387",
+    "area": "Linux, OpenSSH",
+    "attack": "Repeated pre-authentication timeouts against sshd from one source",
+    "rules": "Wazuh 100500–100501",
+    "result": "Pass",
+    "detail": "Graded against a lab attack and committed",
+    "writeup": "",
+    "code": "https://github.com/Mohammedalkahala/purpleloop"
+  }
+]

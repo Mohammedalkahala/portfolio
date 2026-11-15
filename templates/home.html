@@ -1,0 +1,46 @@
+<section class="hero">
+  <div class="hero-text">
+    <h1>I write detections and prove them with real attacks.</h1>
+    <p class="lede">{{role}}. Every rule here ships with the attack that triggers it, the result, the ways I tried to break it, and the report it came from.</p>
+    <p class="actions"><a class="btn" href="{{latest_url}}">Read the latest write-up</a> <a class="btn btn-quiet" href="{{repo}}">Browse the code on GitHub</a></p>
+  </div>
+  <aside class="receipt" aria-label="Test receipt for the latest detection">
+    <p class="r-head">PurpleLoop test receipt</p>
+    <p class="r-title">{{latest_title}}</p>
+    <dl>
+      <div><dt>Source</dt><dd>{{latest_source}}</dd></div>
+      <div><dt>Emulated</dt><dd>ScreenConnect → wscript 1–4.vbs</dd></div>
+      <div><dt>Rules fired</dt><dd>100510 ×3, 100511, 100513, 100514</dd></div>
+      <div><dt>Bypasses tried</dt><dd>6</dd></div>
+      <div><dt>Bypasses closed</dt><dd>2 of 2</dd></div>
+      <div><dt>Without Sysmon</dt><dd>Caught</dd></div>
+    </dl>
+    <p class="r-total"><span>Result</span><span class="pass">PASS</span></p>
+    <p class="r-date">Tested {{latest_date}} on a Windows 11 lab VM</p>
+  </aside>
+</section>
+
+<section id="detections" class="block">
+  <h2>Detections</h2>
+  <p class="intro">Each one starts from a recent public report, is reproduced safely in my lab, and is graded against the attack.</p>
+  <div class="table-wrap">
+  <table class="ledger">
+    <thead><tr><th scope="col">Tested</th><th scope="col">Detection</th><th scope="col">Based on</th><th scope="col">Rules</th><th scope="col">Result</th></tr></thead>
+    <tbody>
+{{detection_rows}}
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section class="block">
+  <h2>Upstream contributions</h2>
+  <ul class="contrib">
+{{contribution_rows}}
+  </ul>
+</section>
+
+<section class="block about-short">
+  <h2>About me</h2>
+  <p>I work in security operations and spend my evenings building and breaking detections in a Proxmox home lab: Active Directory, Windows and Linux endpoints, Sysmon and Wazuh, plus AI agents that draft rules and manage the lab under strict guardrails. I'm working toward a detection engineering or threat hunting role. <a href="{{root}}about/">More about me and the lab</a></p>
+</section>
