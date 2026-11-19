@@ -1,8 +1,13 @@
-<section class="hero">
+<section class="hero" id="top">
   <div class="hero-text">
-    <h1>I write detections and prove them with real attacks.</h1>
-    <p class="lede">{{role}}. Every rule here ships with the attack that triggers it, the result, the ways I tried to break it, and the report it came from.</p>
-    <p class="actions"><a class="btn" href="{{latest_url}}">Read the latest write-up</a> <a class="btn btn-quiet" href="{{repo}}">Browse the code on GitHub</a></p>
+    <h1>Mohammed Alkahala</h1>
+    <p class="idline">I run a SOC by night and build detections in the open — every rule shipped with the attack that proves it.</p>
+    <p class="lede">{{role}}. This site is the lab behind that work: a segmented Proxmox home SOC, the AI agents that run it under guardrails, detections rebuilt from real threat reports, and the write-ups and upstream fixes that came out of it.</p>
+    <p class="actions">
+      <a class="btn" href="{{linkedin}}">LinkedIn</a>
+      <a class="btn btn-quiet" href="{{github}}">GitHub</a>
+      {{resume_btn}}<a class="btn btn-quiet" href="#lab">See the lab</a>
+    </p>
   </div>
   <aside class="receipt" aria-label="Test receipt for the latest detection">
     <p class="r-head">PurpleLoop test receipt</p>
@@ -20,9 +25,73 @@
   </aside>
 </section>
 
+<section id="about" class="block about-short">
+  <h2>About me</h2>
+  <p>I'm a security operations analyst working toward detection engineering and threat hunting. By day I work a SOC watch; by night I build, test and break detections in a Proxmox home lab — Active Directory, Windows and Linux endpoints, Sysmon and Wazuh, plus a set of AI agents that draft rules and run the lab itself under strict, logged guardrails. I hold a B.S. in Cybersecurity from Eastern Michigan University and CompTIA Security+, CySA+ and Linux+. Everything below is real, reproducible, and public.</p>
+</section>
+
+<section id="lab" class="block lab">
+  <h2>The lab: an AI-run home SOC</h2>
+  <p class="intro">One Dell R730 running Proxmox, carved into isolated office, attack and SOC networks. It behaves like a small company's environment — a domain, real endpoints, a SIEM — and it's run day to day by AI agents I built, every one of them read-only by default and blocked from touching a rule, a firewall or a machine without my approval.</p>
+
+  <ul class="stats">
+    <li><span class="s-n">13</span><span class="s-l">VMs across 3 segmented networks</span></li>
+    <li><span class="s-n">14</span><span class="s-l">endpoints monitored in Wazuh</span></li>
+    <li><span class="s-n">6</span><span class="s-l">AI agents, fully governed</span></li>
+    <li><span class="s-n">2</span><span class="s-l">detections published, 2 upstream PRs</span></li>
+  </ul>
+
+  <figure class="shot auto">
+    <img src="img/proxmox-lab.png" alt="Proxmox Server View listing the lab VMs: opnsense, wazuh, intel, office01, loop, kali, files, dc01, linux01, llm-gw, ops01, office02 and the Windows templates.">
+    <figcaption>The Proxmox host: 13 VMs across office, attack and SOC networks behind an OPNsense firewall — a domain controller, Windows and Linux endpoints, Kali, the SIEM, and the governed lab-ops agent (ops01).</figcaption>
+  </figure>
+
+  <h3>Two loops</h3>
+  <div class="loops">
+    <div class="loop">
+      <h4>The detection loop</h4>
+      <p>A threat-intel bot (CVE Radar) surfaces a new CVE or company report. An AI detection-engineering agent drafts a Wazuh and Sigma rule. I review and edit it, deploy it, then attack it from Kali, Atomic Red Team or Caldera. A grading agent scores PASS or FAIL against the attack, and only then does the rule get committed to GitHub — with its case, its grade and its git history.</p>
+    </div>
+    <div class="loop">
+      <h4>The operations loop</h4>
+      <p>Wazuh streams level-10+ alerts to a SOC-triage agent that posts a benign / suspicious / malicious verdict with the evidence it checked. A separate ops agent posts a plain-English health report of the office every morning — the same thing a small-firm client would actually want to see.</p>
+    </div>
+  </div>
+
+  <h3>The agents</h3>
+  <p class="intro">Six agents run the lab: five n8n workflows — detection-engineering, SOC triage, grade &amp; review, finalize &amp; deploy, and a daily ops report — plus the lab-ops agent that builds and changes infrastructure. Each calls a local or hosted model, logs every tool call, and posts to its own Discord channel.</p>
+  <div class="figrow">
+    <figure class="shot">
+      <img src="img/n8n-de.png" alt="n8n canvas of the detection-engineering agent: webhook, Ollama triage, a decision gate, the DE agent with its tools, and a post to the rule-drafts channel.">
+      <figcaption>Detection-engineering agent: a CVE comes in, local Ollama triages it, Claude drafts a Wazuh/Sigma rule, and it posts to #rule-drafts for my review.</figcaption>
+    </figure>
+    <figure class="shot">
+      <img src="img/n8n-soc.png" alt="n8n canvas of the SOC-triage agent: runs every five minutes, queries Wazuh for alerts, and posts a verdict.">
+      <figcaption>SOC-triage agent: every five minutes it pulls level-10+ alerts, builds cases, and posts a benign / suspicious / malicious verdict with evidence.</figcaption>
+    </figure>
+    <figure class="shot">
+      <img src="img/n8n-grade.png" alt="n8n canvas of the grade-and-review agent: runs the grader, splits output, and posts a PASS or FAIL review.">
+      <figcaption>Grade &amp; review: runs the detection against the attack, scores PASS or FAIL, and posts the reasoning to #grades.</figcaption>
+    </figure>
+    <figure class="shot">
+      <img src="img/n8n-finalize.png" alt="n8n canvas of the finalize-and-deploy workflow with an approval gate before it commits or reverts.">
+      <figcaption>Finalize &amp; deploy: lints and deploys a rule, then waits for my Approve/Reject before it commits to GitHub or reverts.</figcaption>
+    </figure>
+  </div>
+
+  <div class="gov">
+    <h3>Watching the watcher</h3>
+    <p>The agents are the interesting part and the dangerous part, so they run on a leash. The lab-ops agent reads every machine with no admin rights and makes changes only through approved, logged paths — a firewall-apply helper, a domain-join helper, and an explicit approval prompt for anything sensitive. A root-owned guard hook blocks secret-printing, destructive commands and any attempt to disable logging or firewalls, and every tool call the agent makes is logged to Wazuh. Wazuh has its own rules that alert when the agent acts, when the guard blocks something, and when a firewall change is applied or refused. The watcher is watched.</p>
+    <figure class="shot wide">
+      <img src="img/watch-the-watcher.png" alt="Wazuh governance alerts: the guard blocking the agent's attempt to read a secret file, and a firewall change applied through the approved path.">
+      <figcaption>Wazuh alerting on the agent's own actions: the guard blocking an attempt to read a secret file (rule 100061), and a firewall change applied through the approved, logged path (100062).</figcaption>
+    </figure>
+  </div>
+</section>
+
 <section id="detections" class="block">
   <h2>Detections</h2>
-  <p class="intro">Each one starts from a recent public report, is reproduced safely in my lab, and is graded against the attack.</p>
+  <p class="intro">Each one starts from a recent public report or CVE, is reproduced safely in the lab, and is graded against the attack that triggers it. No rule ships without proof.</p>
   <div class="table-wrap">
   <table class="ledger">
     <thead><tr><th scope="col">Tested</th><th scope="col">Detection</th><th scope="col">Based on</th><th scope="col">Rules</th><th scope="col">Result</th></tr></thead>
@@ -31,16 +100,96 @@
     </tbody>
   </table>
   </div>
+  <figure class="shot wide">
+    <img src="img/wazuh-detection2-alerts.png" alt="Wazuh search for rule IDs 100510, 100511, 100513 and 100514 returning 28 hits on office02 as the rogue ScreenConnect chain runs.">
+    <figcaption>Detection #2 firing: the ScreenConnect → script-host rules (100510–100514) catching the emulated chain on a lab endpoint.</figcaption>
+  </figure>
 </section>
 
 <section class="block">
   <h2>Upstream contributions</h2>
+  <p class="intro">Detections I rebuilt turned into fixes submitted back to the tools the whole industry uses.</p>
   <ul class="contrib">
 {{contribution_rows}}
   </ul>
+  <figure class="shot">
+    <img src="img/sigma-pr.png" alt="SigmaHQ pull request #6615, open, labeled Rules and Review Needed, with the maintainer bot's first-PR welcome message.">
+    <figcaption>PR #6615 open on SigmaHQ — labeled "Review Needed," under maintainer review: the ScreenConnect and Run-key rules, submitted upstream.</figcaption>
+  </figure>
 </section>
 
-<section class="block about-short">
-  <h2>About me</h2>
-  <p>I work in security operations and spend my evenings building and breaking detections in a Proxmox home lab: Active Directory, Windows and Linux endpoints, Sysmon and Wazuh, plus AI agents that draft rules and manage the lab under strict guardrails. I'm working toward a detection engineering or threat hunting role. <a href="{{root}}about/">More about me and the lab</a></p>
+<section id="writing" class="block">
+  <h2>Writing</h2>
+  <p class="intro">Long-form notes: what a report described, how I rebuilt it, what fired, what broke, and what I'd tell another defender.</p>
+  <ul class="posts">
+{{writeup_rows}}
+    <li class="coming"><time>In progress</time><span class="post-title">Wazuh vs Huntress vs Sumo Logic: running one attack through three platforms</span><p>A hands-on comparison of a self-managed SIEM against a managed MDR and a cloud SIEM — detection coverage, tuning burden, and who responds when it's 2 a.m. <span class="tag">Coming soon</span></p></li>
+  </ul>
+</section>
+
+<section id="experience" class="block">
+  <h2>Experience</h2>
+  <ul class="exp">
+    <li>
+      <div class="exp-when">Jul 2026 – Present</div>
+      <div class="exp-what">
+        <span class="exp-role">Security Operations Analyst</span>
+        <span class="exp-org">NERC E-ISAC · contract via Agile Resources · Remote</span>
+        <p>Overnight SOC watch for the North American electric grid's information-sharing center: exposure and vulnerability monitoring, threat-intelligence triage, and Python automation of recurring analysis and reporting.</p>
+      </div>
+    </li>
+    <li>
+      <div class="exp-when">Dec 2023 – Jun 2026</div>
+      <div class="exp-what">
+        <span class="exp-role">Security Operations Analyst</span>
+        <span class="exp-org">Tamaki Control</span>
+        <p>Day-to-day detection and response across Microsoft 365 / Entra and endpoints: triage and tuning, hands-on malware analysis in an isolated FLARE-VM environment, and onboarding log sources into SIEM and SOAR workflows.</p>
+      </div>
+    </li>
+    <li>
+      <div class="exp-when">May – Aug 2023</div>
+      <div class="exp-what">
+        <span class="exp-role">Cybersecurity Intern (SOC)</span>
+        <span class="exp-org">Ford Motor Company</span>
+        <p>Supported the security operations team: alert triage, investigation support, and documentation.</p>
+      </div>
+    </li>
+    <li>
+      <div class="exp-when">2023</div>
+      <div class="exp-what">
+        <span class="exp-role">Freelance Security Consultant</span>
+        <span class="exp-org">Small &amp; mid-sized businesses</span>
+        <p>Set up and secured infrastructure for small firms — servers, firewalls, file shares, multi-factor and basic compliance. The exact kind of environment managed-security vendors protect.</p>
+      </div>
+    </li>
+  </ul>
+</section>
+
+<section id="research" class="block">
+  <h2>Research</h2>
+  <ul class="contrib">
+    <li>
+      <span class="proj">EISA 2025</span>
+      <span>Co-authored conference paper on the attack surface of the Canvas learning-management system, with my Eastern Michigan University group.</span>
+      <span class="status review">Published</span>
+    </li>
+  </ul>
+</section>
+
+<section id="video" class="block">
+  <h2>Lab walkthrough</h2>
+  <p class="intro">A short tour of the lab, the agents and a detection running end to end.</p>
+  <div class="video-ph" data-video="youtube">
+    <span class="shot-label">Video embed — lab walkthrough (coming soon)</span>
+  </div>
+</section>
+
+<section id="contact" class="block contact">
+  <h2>Contact</h2>
+  <p>Open to detection engineering and threat hunting roles. The code is on <a href="{{github}}">GitHub</a>; the fastest way to reach me is <a href="{{linkedin}}">LinkedIn</a>.</p>
+  <p class="actions">
+    <a class="btn" href="{{linkedin}}">Connect on LinkedIn</a>
+    <a class="btn btn-quiet" href="{{repo}}">Browse PurpleLoop</a>
+    {{resume_btn}}
+  </p>
 </section>

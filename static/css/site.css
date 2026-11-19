@@ -141,3 +141,71 @@ a:hover { color: var(--purple-deep); text-decoration-thickness: 2px; }
 @media (prefers-reduced-motion: reduce) {
   .receipt { animation: none; }
 }
+
+/* ======================= HUB (home page) ======================= */
+.site-head { position: sticky; top: 0; z-index: 20; background: color-mix(in srgb, var(--paper) 90%, transparent); backdrop-filter: blur(8px); }
+.site-head nav { flex-wrap: wrap; }
+section[id] { scroll-margin-top: 5.5rem; }
+
+/* Hero identity */
+.hero h1 { font-size: clamp(2.5rem, 5.6vw, 4.4rem); max-width: none; margin-bottom: 0.9rem; }
+.idline { font-size: 1.35rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1.28; margin: 0 0 1.1rem; max-width: 26ch; color: var(--ink); }
+
+/* Lab stats strip */
+.stats { list-style: none; display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin: 1.75rem 0 0.5rem; padding: 1.4rem 0 0; border-top: 2px solid var(--ink); }
+.stats li { display: flex; flex-direction: column; gap: 0.15rem; }
+.s-n { font-family: var(--mono); font-weight: 600; font-size: 2.3rem; line-height: 1; letter-spacing: -0.02em; color: var(--purple); }
+.s-l { color: var(--muted); font-size: 0.88rem; max-width: 20ch; }
+
+/* Lab section */
+.lab h3 { font-size: 1.3rem; letter-spacing: -0.015em; margin: 2.6rem 0 1rem; font-weight: 800; }
+.loops { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+.loop h4 { font-size: 1.05rem; margin: 0 0 0.5rem; }
+.loop p { color: var(--muted); margin: 0; max-width: 48ch; }
+.gov { margin-top: 2.6rem; padding: 1.75rem; background: var(--white); border: 1px solid var(--line); border-radius: 10px; }
+.gov h3 { margin-top: 0; }
+.gov p { max-width: 72ch; margin: 0; }
+
+/* Screenshot placeholders / figures */
+.shot { margin: 1.75rem 0 0; }
+.shot-ph { display: flex; align-items: center; justify-content: center; text-align: center; min-height: 240px; padding: 1.5rem; border: 1.5px dashed var(--line); border-radius: 8px;
+  background: repeating-linear-gradient(45deg, var(--white), var(--white) 13px, #eceef4 13px, #eceef4 26px); }
+.shot.wide .shot-ph { min-height: 340px; }
+.shot-label { font-family: var(--mono); font-size: 0.82rem; color: var(--muted); max-width: 42ch; }
+.shot img { width: 100%; height: auto; display: block; border: 1px solid var(--line); border-radius: 8px; }
+.shot.auto img { width: auto; max-width: min(100%, 460px); margin: 0 auto; }
+.shot.auto figcaption { max-width: 460px; margin-left: auto; margin-right: auto; }
+figcaption { color: var(--muted); font-size: 0.88rem; margin-top: 0.6rem; max-width: 62ch; }
+.figrow { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.75rem; }
+.figrow .shot { margin-top: 0; }
+
+/* Experience */
+.exp { list-style: none; padding: 0; margin: 0; }
+.exp li { display: grid; grid-template-columns: 11rem 1fr; gap: 1.5rem; padding: 1.4rem 0; border-bottom: 1px solid var(--line); }
+.exp-when { font-family: var(--mono); font-size: 0.85rem; color: var(--muted); padding-top: 0.2rem; }
+.exp-role { font-weight: 700; display: block; }
+.exp-org { color: var(--muted); font-size: 0.92rem; display: block; margin-bottom: 0.45rem; }
+.exp-what p { margin: 0; max-width: 64ch; }
+
+/* Writing extras */
+.posts .post-title { font-weight: 700; font-size: 1.2rem; color: var(--ink); text-decoration: none; display: block; }
+.posts .post-title:hover { color: var(--purple); }
+.posts .coming, .posts .coming .post-title { color: var(--muted); }
+.posts .coming time { color: var(--miss); }
+.posts .coming .post-title { font-weight: 700; }
+.tag { display: inline-block; font-family: var(--mono); font-size: 0.7rem; font-weight: 600; color: var(--purple); border: 1px solid var(--purple); border-radius: 999px; padding: 0.05rem 0.55rem; margin-left: 0.3rem; vertical-align: 0.1em; }
+
+/* Video */
+.video-ph { aspect-ratio: 16 / 9; display: flex; align-items: center; justify-content: center; text-align: center; background: var(--ink); border-radius: 10px; margin-top: 0.5rem; }
+.video-ph .shot-label { color: #9aa2c0; }
+.video-ph iframe { width: 100%; height: 100%; border: 0; border-radius: 10px; }
+
+/* Contact */
+.contact p { max-width: 62ch; }
+
+@media (max-width: 860px) {
+  .stats { grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+  .loops, .figrow { grid-template-columns: 1fr; }
+  .exp li { grid-template-columns: 1fr; gap: 0.3rem; }
+  .exp-when { padding-top: 0; }
+}

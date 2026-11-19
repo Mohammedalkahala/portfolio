@@ -104,12 +104,18 @@ def build():
         f'    <li><span class="proj">{esc(c["project"])}</span><a href="{esc(c["url"])}">{esc(c["title"])} ({esc(c["ref"])})</a>'
         f'<span class="status review">{esc(c["status"])}</span></li>' for c in contribs)
     latest = dets[0]
-    latest_post = next((p for p in posts if p["slug"] == latest.get("writeup")), posts[0])
+    wu_rows = "\n".join(
+        f'    <li><time datetime="{p["date"]}">{long_date(p["date"])}</time>'
+        f'<a class="post-title" href="writeups/{p["slug"]}/">{esc(p["title"])}</a>'
+        f'<p>{esc(p["summary"])}</p></li>' for p in posts)
+    resume_btn = (f'<a class="btn btn-quiet" href="{esc(CFG["resume_pdf"])}">Résumé (PDF)</a> '
+                  if CFG.get("resume_pdf") else "")
     home = fill(TPL["home"], root="", role=esc(CFG["role"]), repo=esc(CFG["repo"]),
-                latest_url=f"writeups/{latest_post['slug']}/", latest_title=esc(latest["title"]),
+                linkedin=esc(CFG["linkedin"]), github=esc(CFG["github"]), resume_btn=resume_btn,
+                latest_title=esc(latest["title"]),
                 latest_source=esc(latest["source"]), latest_date=long_date(latest["date"]),
-                detection_rows="\n".join(det_rows), contribution_rows=con_rows)
-    page("index.html", f"{CFG['name']}, detection engineering", CFG["role"], home, 0)
+                detection_rows="\n".join(det_rows), contribution_rows=con_rows, writeup_rows=wu_rows)
+    page("index.html", f"{CFG['name']} — detection engineering & home SOC", CFG["role"], home, 0)
 
     # About
     page("about/index.html", f"About | {CFG['name']}", "About Mohammed Alkahala",
