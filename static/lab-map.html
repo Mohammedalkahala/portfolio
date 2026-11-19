@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PurpleLoop Lab — End-to-End Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0d14; --panel:#111623; --panel2:#161c2b; --line:#232b3d; --text:#e6e9f0; --muted:#8a93a8; --dim:#5b6479;
+    --live:#34d399; --progress:#fbbf24; --planned:#60a5fa; --future:#a78bfa; --accent:#c084fc;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;font-size:14px}
+  header{padding:18px 24px 10px;display:flex;flex-wrap:wrap;gap:12px 28px;align-items:flex-end;justify-content:space-between;border-bottom:1px solid var(--line)}
+  h1{font-size:20px;font-weight:600;margin:0;letter-spacing:.2px}
+  h1 span{color:var(--accent)}
+  .sub{color:var(--muted);font-size:13px;margin-top:4px}
+  .stats{display:flex;gap:14px;flex-wrap:wrap}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px 12px;font-size:12px;color:var(--muted)}
+  .stat b{font-size:16px;color:var(--text);margin-right:6px;font-weight:600}
+  .toolbar{padding:10px 24px;display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;border-bottom:1px solid var(--line)}
+  .group{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .group label{color:var(--dim);font-size:11px;text-transform:uppercase;letter-spacing:.8px;margin-right:4px}
+  button.chip{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:999px;padding:5px 11px;font:500 12px Inter,sans-serif;cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+  button.chip:hover{border-color:#3a4560}
+  button.chip.on{background:#1d2436;border-color:var(--accent)}
+  button.chip.off{opacity:.4}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+  main{display:grid;grid-template-columns:minmax(0,1fr) 370px;min-height:calc(100vh - 140px)}
+  #stage{position:relative;overflow:auto;padding:10px}
+  svg{width:100%;height:auto;display:block;min-width:900px}
+  aside{border-left:1px solid var(--line);background:var(--panel);padding:18px 20px;overflow:auto;max-height:calc(100vh - 140px);position:sticky;top:0}
+  aside h2{font-size:17px;margin:0 0 4px;font-weight:600}
+  aside .kicker{font-size:11px;letter-spacing:.8px;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+  aside p{color:#c3c9d6;line-height:1.55;margin:8px 0}
+  aside ul,aside ol{padding-left:18px;margin:8px 0;color:#c3c9d6;line-height:1.55}
+  aside li{margin:4px 0}
+  .badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid;margin-right:6px;font-weight:500}
+  .kv{display:grid;grid-template-columns:96px 1fr;gap:4px 10px;font-size:13px;margin:10px 0}
+  .kv div:nth-child(odd){color:var(--dim)}
+  .mono{font-family:"JetBrains Mono",monospace;font-size:12px}
+  .conn{font-size:12.5px;color:#c3c9d6;margin:3px 0}
+  .conn b{color:var(--text);font-weight:500}
+  .phases{padding:12px 24px 22px;border-top:1px solid var(--line)}
+  .phases .row{display:flex;gap:8px;flex-wrap:wrap}
+  .phase{flex:1 1 140px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer;min-width:140px}
+  .phase:hover{border-color:#3a4560}
+  .phase.on{border-color:var(--accent);background:#1a2032}
+  .phase .t{font-weight:600;font-size:13px}
+  .phase .d{color:var(--muted);font-size:12px;margin-top:3px;line-height:1.4}
+  .phase .bar{height:4px;border-radius:4px;margin-top:8px;background:var(--line);overflow:hidden}
+  .phase .bar i{display:block;height:100%}
+  .tip{position:fixed;pointer-events:none;background:#0f1422;border:1px solid #2c3550;border-radius:8px;padding:7px 10px;font-size:12px;max-width:260px;color:#d7dceb;display:none;z-index:5;box-shadow:0 6px 24px rgba(0,0,0,.4)}
+  .hint{color:var(--dim);font-size:12px}
+  .node{cursor:pointer}
+  .node rect.card{transition:opacity .2s}
+  .faded{opacity:.14}
+  .edge{fill:none;stroke:#3b4660;stroke-width:1.3;transition:opacity .2s, stroke .2s}
+  .edge.hot{stroke-width:2.2}
+  .edge.anim{stroke-dasharray:6 6;animation:flow 1.1s linear infinite}
+  @keyframes flow{to{stroke-dashoffset:-24}}
+  @media (prefers-reduced-motion: reduce){.edge.anim{animation:none}}
+  .elabel{font:500 10.5px Inter,sans-serif;fill:#e9ecf5}
+  .elabel-bg{fill:#0d1220;stroke:#2c3550}
+  .steps li{margin:6px 0}
+  .steps li.cur{color:var(--text)}
+  @media (max-width: 980px){main{grid-template-columns:1fr}aside{border-left:none;border-top:1px solid var(--line);max-height:none;position:static}}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <a href="./" style="display:inline-block;color:#8a93a8;text-decoration:none;font-size:12px;margin-bottom:8px">← Back to portfolio</a><h1><span>PurpleLoop</span> Lab — end-to-end map</h1>
+    <div class="sub">Every endpoint, zone, cloud tenant, AI agent and output: what's live today and what's coming. Click anything.</div>
+  </div>
+  <div class="stats" id="stats"></div>
+</header>
+
+<div class="toolbar">
+  <div class="group" id="flowBtns"><label>Follow a flow</label></div>
+  <div class="group" id="statusBtns"><label>Show</label></div>
+</div>
+
+<main>
+  <div id="stage"><svg id="map" viewBox="0 0 1600 960" role="img" aria-label="Architecture map of the PurpleLoop homelab: home network, OPNsense firewall, LAN, SOC, attack and VPN zones, cloud tenants, AI agents and outputs, with live and planned components."></svg></div>
+  <aside id="panel"></aside>
+</main>
+
+<section class="phases">
+  <div class="group" style="margin-bottom:10px"><label>Roadmap — click a phase to highlight its parts</label></div>
+  <div class="row" id="phaseRow"></div>
+</section>
+<div class="tip" id="tip"></div>
+
+<script>
+const STATUS = {
+  live:     {label:"Live",        color:"var(--live)",     hex:"#34d399", dash:""},
+  progress: {label:"In progress", color:"var(--progress)", hex:"#fbbf24", dash:""},
+  planned:  {label:"Planned",     color:"var(--planned)",  hex:"#60a5fa", dash:"6 4"},
+  future:   {label:"Future",      color:"var(--future)",   hex:"#a78bfa", dash:"2 4"},
+};
+
+const PHASES = [
+  {id:"done", t:"Foundation", d:"Lab, SIEM, AD, CVE Radar, 5 n8n agents, detection #1"},
+  {id:"1a",   t:"1a · ops01 agent", d:"Claude Code with guardrails; reads everything; firewall hardened"},
+  {id:"1b",   t:"1b · Expand lab", d:"Wazuh everywhere, golden template, office02, Vaultwarden"},
+  {id:"2",    t:"2 · Cloud", d:"M365 / Entra ID and AWS telemetry into Wazuh"},
+  {id:"3",    t:"3 · Detections", d:"10+ attack-proven rules, incl. company-sourced (Huntress, Red Canary)"},
+  {id:"4",    t:"4 · SIEM bench", d:"Same rules translated and tested in Splunk, Sumo Logic, Huntress"},
+  {id:"5",    t:"5 · Product", d:"PurpleLoop MCP, public detection feed, tuning profiles"},
+];
+
+const ZONES = [
+  {id:"home",  x:16,   y:56,  w:296, h:868, title:"Home network", sub:"home LAN", tint:"#1a2236"},
+  {id:"lan",   x:446,  y:56,  w:740, h:292, title:"LAN · office", sub:"10.10.10.0/24", tint:"#14233a"},
+  {id:"soc",   x:446,  y:368, w:740, h:356, title:"SOC", sub:"10.10.30.0/24", tint:"#1b1834"},
+  {id:"attack",x:446,  y:744, w:356, h:180, title:"ATTACK", sub:"10.10.20.0/24", tint:"#2a1620"},
+  {id:"vpn",   x:830,  y:744, w:356, h:180, title:"VPN guest", sub:"10.10.40.0/24 · WireGuard", tint:"#16252a"},
+  {id:"cloud", x:1210, y:56,  w:374, h:292, title:"Cloud", sub:"phase 2", tint:"#132a2a"},
+  {id:"out",   x:1210, y:368, w:374, h:356, title:"Outputs & build in public", sub:"where results land", tint:"#22202e"},
+  {id:"bench", x:1210, y:744, w:374, h:180, title:"SIEM test bench", sub:"phase 4", tint:"#1f1a2e"},
+];
+
+// w/h default 168x66
+const N = [
+  // HOME
+  {id:"you", z:"home", x:40, y:96, label:"You", sub:"laptop · claude.ai/code", s:"live", ph:"done",
+   role:"Gives orders, reviews drafts, approves every change (deploys, firewall, joins). Works from claude.ai/code on the desktop and Discord.",
+   ip:"home LAN"},
+  {id:"proxmox", z:"home", x:40, y:236, label:"Proxmox host", sub:"Dell R730 · PVE 9.2", s:"live", ph:"done",
+   role:"Hypervisor for every lab VM. The ops01 agent builds VMs here through a scoped API token (pool agent-lab only). Wazuh agent installed, waiting on WAN rules to reach the manager.",
+   ip:"home LAN", extra:"Wazuh agent: in progress (1b)"},
+  {id:"gpu", z:"home", x:40, y:376, label:"GPU PC", sub:"Ollama · qwen2.5:7b", s:"live", ph:"done",
+   role:"Local LLM for CVE triage (CVE Radar) and loop. Read-only svc-claude account for the agent. Wazuh agent planned.",
+   ip:"home LAN · :11434"},
+  {id:"intelsrc", z:"home", x:40, y:516, label:"Threat-intel feeds", sub:"NVD · CISA KEV · EPSS", s:"live", ph:"done",
+   role:"Public sources CVE Radar pulls hourly: new CVEs, known-exploited list, exploit likelihood."},
+  {id:"posts", z:"home", x:40, y:656, label:"Vendor research", sub:"Huntress · Red Canary", s:"planned", ph:"3",
+   role:"Company-sourced detections: pick one published post (Huntress RMM → Windows Script Host first, then Red Canary's ClickFix detection opportunities), reproduce it safely, prove it with an attack, publish with the post linked."},
+  {id:"internet", z:"home", x:40, y:796, label:"Internet", sub:"Claude API · GitHub · Discord", s:"live", ph:"done",
+   role:"Outbound services: Anthropic API for the agents, GitHub for the repo, Discord webhooks, package mirrors. SOC egress allowed only to the internet (private ranges blocked)."},
+
+  // FIREWALL
+  {id:"opnsense", z:"fw", x:332, y:96, w:96, h:800, label:"OPNsense", sub:"firewall", s:"live", ph:"done", vertical:true,
+   role:"Routes and filters every zone. Suricata IDS ships alerts to Wazuh. WireGuard VPN for Assem. SOC zone hardened 11/11 by the ops01 agent: 14 explicit flows, everything else private is blocked and logged. Agent writes only through fw-apply (approval).",
+   ip:"WAN (home) · gateways .1"},
+
+  // LAN
+  {id:"dc01", z:"lan", x:466, y:96, label:"dc01", sub:"AD · DNS · AD CS", s:"live", ph:"done",
+   role:"Windows Server 2025 domain controller for MOLAB (corp.mo-lab.lan). LDAPS for Wazuh, Nextcloud, loop. Sysmon + Wazuh agent. Agent has read-only log access (svc-claude). svc-claude-join for agent-built machines.",
+   ip:"10.10.10.10"},
+  {id:"office01", z:"lan", x:648, y:96, label:"office01", sub:"Win11 · Sysmon · Atomic", s:"live", ph:"done",
+   role:"Domain-joined workstation and the main attack target. Atomic Red Team tests run over SSH from loop; baseline snapshot loop-baseline-v2.",
+   ip:"10.10.10.105"},
+  {id:"office02", z:"lan", x:830, y:96, label:"office02", sub:"built by the agent", s:"planned", ph:"1b",
+   role:"Second workstation for realistic attacks (lateral movement, credential reuse). The ops01 agent clones it from the golden template, joins it to the domain with ad-join, and snapshots it — on your order.",
+   ip:"10.10.10.x"},
+  {id:"linux01", z:"lan", x:1010, y:96, label:"linux01", sub:"Ubuntu · SSSD · auditd", s:"live", ph:"done",
+   role:"Linux server joined to AD. Target for the regreSSHion detection (rules 100500/100501, graded PASS).",
+   ip:"10.10.10.30"},
+  {id:"files", z:"lan", x:466, y:236, label:"files", sub:"Nextcloud on AD", s:"live", ph:"done",
+   role:"File share (team folder Amana-Shared) with AD logins over LDAPS. Wazuh agent 002.",
+   ip:"10.10.10.20"},
+  {id:"vault", z:"lan", x:648, y:236, label:"Vaultwarden", sub:"password manager", s:"planned", ph:"1b",
+   role:"Self-hosted password manager for the lab; also holds the agent's keys."},
+  {id:"template", z:"lan", x:830, y:236, label:"Golden template", sub:"Win11 (VM 9000)", s:"planned", ph:"1b",
+   role:"Sysprepped Windows 11 with SSH, a local admin for ops01, Wazuh agent and Sysmon baked in. office02 and every future target is a clone of it (~10 minutes, hands-off)."},
+  {id:"lanmore", z:"lan", x:1010, y:236, label:"More targets", sub:"on demand", s:"future", ph:"3",
+   role:"Throwaway attack targets the agent spins up per detection test, then deletes. Pool agent-lab, VMIDs 200–299."},
+
+  // SOC
+  {id:"wazuh", z:"soc", x:466, y:408, label:"Wazuh SIEM", sub:"4.14.9 · indexer · API", s:"live", ph:"done",
+   role:"The SIEM. Every endpoint's agent reports here. Custom rules include regreSSHion (100500/1), ops01 agent monitoring (100060–100063), and every PurpleLoop detection.",
+   ip:"10.10.30.10"},
+  {id:"intel", z:"soc", x:648, y:408, label:"CVE Radar", sub:"intel container", s:"live", ph:"done",
+   role:"Pulls new CVEs hourly, triages with Ollama, posts #critical-alerts and #daily-digest, and hands relevant CVEs to the DE agent.",
+   ip:"10.10.30.20"},
+  {id:"loop", z:"soc", x:830, y:408, label:"loop", sub:"n8n · PurpleLoop repo", s:"live", ph:"done",
+   role:"Runs n8n (the 5 agents below) and the PurpleLoop repo: rules, deploy/finalize/commit scripts, cases and grading.",
+   ip:"10.10.30.30"},
+  {id:"ops01", z:"soc", x:1010, y:408, label:"ops01", sub:"Claude Code lab agent", s:"live", ph:"1a",
+   role:"Claude Code with Remote Control. Reads every machine (no admin anywhere), builds VMs only in its own pool, changes the firewall only through fw-apply. A root-owned guard blocks risky commands and logs every action to Discord and Wazuh (a blocked action raises a level-10 alert).",
+   ip:"10.10.30.40"},
+  {id:"triage", z:"soc", x:466, y:560, w:120, h:58, label:"SOC triage", sub:"Haiku · 5 min", s:"live", ph:"done",
+   role:"n8n agent: every 5 minutes picks up level-10+ alerts, investigates with search tools and posts a verdict to #soc-triage."},
+  {id:"de", z:"soc", x:598, y:560, w:120, h:58, label:"DE agent", sub:"Sonnet", s:"live", ph:"done",
+   role:"n8n detection-engineering agent: turns a CVE into a draft Wazuh + Sigma rule and test idea, posted to #rule-drafts."},
+  {id:"planner", z:"soc", x:730, y:560, w:120, h:58, label:"Planner", sub:"Atomic · Caldera", s:"live", ph:"done",
+   role:"n8n purple-team planner: finds the right Atomic test or Caldera ability (or writes a manual test) for a rule. Posts to #test-plans."},
+  {id:"grade", z:"soc", x:862, y:560, w:120, h:58, label:"Grade & Review", sub:"PASS / FAIL", s:"live", ph:"done",
+   role:"n8n agent: runs purpleloop grade after a test and explains the result in #grades."},
+  {id:"opsasst", z:"soc", x:994, y:560, w:120, h:58, label:"Ops assistant", sub:"daily report", s:"live", ph:"done",
+   role:"n8n agent: chat for ops questions plus a 07:41 daily health report (machines, accounts, alerts) to #amana-ops."},
+  {id:"llmgw", z:"soc", x:466, y:648, w:168, h:58, label:"llm-gw", sub:"other project", s:"live", ph:"done",
+   role:"SearXNG + FreeLLMAPI for ZINAD prospect research. Protected; the agent can only read it.", ip:"10.10.30.31"},
+
+  // ATTACK
+  {id:"kali", z:"attack", x:466, y:788, label:"kali", sub:"Caldera · attack tools", s:"live", ph:"done",
+   role:"Attacker box. MITRE Caldera (:8888) and manual attacks (e.g. the regreSSHion test). Can't reach the SOC except, soon, its Wazuh agent ports.",
+   ip:"10.10.20.50", extra:"Wazuh agent: in progress (1b)"},
+  {id:"caldera", z:"attack", x:648, y:788, w:130, h:66, label:"Atomic tests", sub:"via loop → office01", s:"live", ph:"done",
+   role:"Atomic Red Team tests run on office01 from loop over SSH; Caldera abilities chain techniques into one run."},
+
+  // VPN
+  {id:"assem", z:"vpn", x:848, y:788, label:"Assem", sub:"teammate via VPN", s:"live", ph:"done",
+   role:"Coworker with WireGuard access to the lab and a domain account."},
+
+  // CLOUD
+  {id:"m365", z:"cloud", x:1226, y:96, label:"M365 / Entra ID", sub:"+ Entra Connect", s:"planned", ph:"2",
+   role:"Identity and mailbox telemetry (sign-ins, mailbox rules, OAuth grants) into Wazuh. Synced from dc01. The agent gets a limited app registration."},
+  {id:"aws", z:"cloud", x:1400, y:96, label:"AWS", sub:"CloudTrail · GuardDuty", s:"planned", ph:"2",
+   role:"Cloud control-plane telemetry into Wazuh. Billing alarm first; the agent works through a bounded role with Terraform templates and auto-destroy timers."},
+  {id:"floci", z:"cloud", x:1226, y:236, label:"Floci sandbox", sub:"AWS practice", s:"future", ph:"2",
+   role:"Optional local AWS emulator for practising cloud attacks without a bill."},
+  {id:"cloudatk", z:"cloud", x:1400, y:236, label:"Cloud attacks", sub:"identity · IAM", s:"future", ph:"3",
+   role:"Attack simulations against the tenants (device-code phishing, mailbox hiding rules, IAM changes) to prove cloud detections."},
+
+  // OUTPUTS
+  {id:"discord", z:"out", x:1226, y:408, label:"Discord", sub:"alerts · drafts · approvals", s:"live", ph:"done",
+   role:"#critical-alerts, #daily-digest, #rule-drafts, #deploys (Approve/Reject), #test-plans, #grades, #soc-triage, #amana-ops, #agent-log, and a dedicated channel for the ops01 agent (pending)."},
+  {id:"github", z:"out", x:1400, y:408, label:"GitHub", sub:"purpleloop repo", s:"live", ph:"done",
+   role:"Every approved detection is committed with its case and grade. Being made public-ready: README, detections/ with receipts, agents/, decoders/."},
+  {id:"obsidian", z:"out", x:1226, y:528, label:"Obsidian vault", sub:"repo = vault", s:"planned", ph:"3",
+   role:"Generated notes per CVE, detection, test run and ATT&CK technique; Dataview dashboards for coverage and stale rules."},
+  {id:"site", z:"out", x:1400, y:528, label:"Blog · LinkedIn", sub:"Quartz site", s:"planned", ph:"3",
+   role:"Build in public: one post per shipped detection or finding (e.g. 'my AI agent fixed my firewall', 'watching the watcher'), with the repo linked."},
+  {id:"mcp", z:"out", x:1226, y:640, label:"PurpleLoop MCP", sub:"ask the lab", s:"future", ph:"5",
+   role:"The AI brain: ask about coverage for a CVE, plan a test, what changed this week — with Claude or a local model."},
+  {id:"feed", z:"out", x:1400, y:640, label:"Public detection feed", sub:"tested rules, monthly", s:"future", ph:"5",
+   role:"Open-source detection content with receipts: every rule ships with its attack, grade, false-positive notes and source."},
+
+  // BENCH
+  {id:"splunk", z:"bench", x:1226, y:788, w:108, h:66, label:"Splunk", sub:"SPL", s:"future", ph:"4", role:"Rules translated from Sigma and tested with the same attacks."},
+  {id:"sumo", z:"bench", x:1344, y:788, w:108, h:66, label:"Sumo Logic", sub:"cloud SIEM", s:"future", ph:"4", role:"Same rules, second platform, compared side by side."},
+  {id:"huntressb", z:"bench", x:1462, y:788, w:108, h:66, label:"Huntress", sub:"managed SIEM", s:"future", ph:"4", role:"Same attacks against a managed platform; write-up comparing what each caught."},
+];
+
+// edges: [from, to, label, flows[], status?]
+const E = [
+  ["intelsrc","intel","new CVEs, hourly",["cve"]],
+  ["intel","gpu","triage with Ollama",["cve"]],
+  ["intel","discord","#critical-alerts · #daily-digest",["cve"]],
+  ["intel","de","relevant CVE → webhook",["cve"]],
+  ["de","discord","#rule-drafts",["cve"]],
+  ["you","loop","review + Finalize form",["cve"]],
+  ["loop","wazuh","deploy rules",["cve"]],
+  ["loop","github","commit on Approve",["cve","public"]],
+
+  ["you","planner","what to test",["test"]],
+  ["planner","discord","#test-plans",["test"]],
+  ["kali","office01","attack (Caldera / manual)",["test"]],
+  ["caldera","office01","Atomic over SSH",["test"]],
+  ["kali","linux01","regreSSHion test",["test"]],
+  ["grade","wazuh","which rules fired?",["test"]],
+  ["grade","discord","#grades",["test"]],
+
+  ["dc01","wazuh","Sysmon · Security",["telemetry"]],
+  ["office01","wazuh","Sysmon · Security",["telemetry","test"]],
+  ["linux01","wazuh","auditd · journald",["telemetry"]],
+  ["files","wazuh","agent 002",["telemetry"]],
+  ["opnsense","wazuh","Suricata alerts",["telemetry"]],
+  ["proxmox","wazuh","agent (in progress)",["telemetry"],"progress"],
+  ["gpu","wazuh","agent (planned)",["telemetry"],"planned"],
+  ["kali","wazuh","agent (in progress)",["telemetry"],"progress"],
+  ["office02","wazuh","agent baked in",["telemetry"],"planned"],
+  ["m365","wazuh","sign-ins · mailbox rules",["telemetry"],"planned"],
+  ["aws","wazuh","CloudTrail · GuardDuty",["telemetry"],"planned"],
+
+  ["wazuh","triage","L10+ every 5 min",["triage"]],
+  ["triage","discord","#soc-triage",["triage"]],
+
+  ["you","ops01","orders + approvals",["ops"]],
+  ["ops01","proxmox","build in agent-lab",["ops"]],
+  ["ops01","opnsense","fw-apply (approved)",["ops"]],
+  ["ops01","dc01","read logs (SSH)",["ops"]],
+  ["ops01","gpu","read logs (SSH)",["ops"]],
+  ["ops01","wazuh","every action → rules 100060–63",["ops","telemetry"]],
+  ["ops01","discord","#agent-log",["ops"]],
+  ["ops01","template","clone",["ops"],"planned"],
+  ["template","office02","→ office02",["ops"],"planned"],
+  ["ops01","office02","ad-join + snapshot",["ops"],"planned"],
+
+  ["wazuh","opsasst","24h alerts",["daily"]],
+  ["dc01","opsasst","AD lookups (LDAPS)",["daily"]],
+  ["opsasst","discord","#amana-ops",["daily"]],
+
+  ["posts","loop","reproduce detection",["public"],"planned"],
+  ["github","obsidian","generated notes",["public"],"planned"],
+  ["obsidian","site","publish",["public"],"planned"],
+  ["github","feed","monthly release",["public"],"future"],
+  ["github","mcp","coverage lookups",["public"],"future"],
+  ["github","splunk","translate & test",["public"],"future"],
+  ["github","sumo","",["public"],"future"],
+  ["github","huntressb","",["public"],"future"],
+  ["assem","opnsense","WireGuard",["access"]],
+];
+
+const FLOWS = [
+  {id:"cve", t:"CVE → detection", color:"#c084fc", steps:[
+    "CVE Radar pulls new CVEs from NVD, CISA KEV and EPSS every hour.",
+    "Ollama on the GPU PC triages them; alerts and a daily digest land in Discord.",
+    "Relevant CVEs go to the DE agent, which drafts a Wazuh + Sigma rule into #rule-drafts.",
+    "You review the draft and submit the Finalize form on loop.",
+    "loop deploys the rule to Wazuh; Approve/Reject links appear in #deploys.",
+    "On Approve, the rule is committed to GitHub with its case and grade."]},
+  {id:"test", t:"Attack & grade", color:"#f472b6", steps:[
+    "You ask the Planner what to test; it posts a plan to #test-plans.",
+    "Kali (Caldera / manual) or Atomic tests from loop attack office01 or linux01.",
+    "office01's Sysmon and Security logs flow to Wazuh.",
+    "Grade & Review checks which rules fired and explains PASS/FAIL in #grades."]},
+  {id:"telemetry", t:"Telemetry → SIEM", color:"#34d399", steps:[
+    "Every endpoint runs a Wazuh agent: dc01, office01, linux01, files, ops01.",
+    "OPNsense ships Suricata IDS alerts.",
+    "In progress: Proxmox host and Kali. Planned: GPU PC and office02 (baked into the template).",
+    "Phase 2: M365 / Entra ID and AWS (CloudTrail, GuardDuty) feed the same SIEM."]},
+  {id:"triage", t:"SOC triage", color:"#fbbf24", steps:[
+    "Wazuh raises level-10+ alerts.",
+    "Every 5 minutes the SOC triage agent investigates them.",
+    "It posts a verdict with evidence to #soc-triage."]},
+  {id:"ops", t:"ops01 agent", color:"#60a5fa", steps:[
+    "You give orders and approve from claude.ai/code.",
+    "ops01 builds VMs only inside its Proxmox pool, and changes the firewall only through fw-apply.",
+    "It reads logs on every machine with no admin rights.",
+    "Every action is posted to Discord and logged to Wazuh; a blocked action is a level-10 alert.",
+    "Next: clone the golden template into office02, join it with ad-join, snapshot it."]},
+  {id:"daily", t:"Daily report", color:"#38bdf8", steps:[
+    "At 07:41 the Ops assistant pulls 24h of alerts from Wazuh and account state from AD.",
+    "It writes a plain-language health report to #amana-ops."]},
+  {id:"public", t:"Build in public", color:"#a78bfa", steps:[
+    "Approved detections land in the GitHub repo with receipts.",
+    "Company-sourced detections reproduce a Huntress or Red Canary post in the lab.",
+    "Obsidian turns the repo into notes and dashboards; Quartz publishes the site.",
+    "Later: the same rules tested in Splunk, Sumo Logic and Huntress; a public feed and the PurpleLoop MCP."]},
+];
+
+// ---------- rendering ----------
+const svg = document.getElementById('map');
+const NS = 'http://www.w3.org/2000/svg';
+const byId = Object.fromEntries(N.map(n => [n.id, n]));
+N.forEach(n => { n.w = n.w || 168; n.h = n.h || 66; n.cx = n.x + n.w/2; n.cy = n.y + n.h/2; });
+
+function el(tag, attrs, parent){ const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
+
+const defs = el('defs', {}, svg);
+Object.entries({def:'#4b5674'}).concat(FLOWS.map(f => [f.id, f.color])).concat(Object.entries(STATUS).map(([k,v]) => ['s'+k, v.hex])).forEach(([k,c]) => {
+  const m = el('marker', {id:'ar-'+k, viewBox:'0 0 10 10', refX:'9', refY:'5', markerWidth:'7', markerHeight:'7', orient:'auto-start-reverse'}, defs);
+  el('path', {d:'M0,0 L10,5 L0,10 z', fill:c}, m);
+});
+
+const gZones = el('g', {}, svg), gEdges = el('g', {}, svg), gNodes = el('g', {}, svg), gLabels = el('g', {}, svg);
+
+ZONES.forEach(z => {
+  el('rect', {x:z.x, y:z.y, width:z.w, height:z.h, rx:16, fill:z.tint, stroke:'#26304a', 'stroke-width':1}, gZones);
+  const t = el('text', {x:z.x+16, y:z.y+24, fill:'#cfd5e4', 'font-size':13, 'font-weight':600, 'font-family':'Inter'}, gZones); t.textContent = z.title;
+  const s = el('text', {x:z.x+16 + z.title.length*7.6 + 10, y:z.y+24, fill:'#7f88a0', 'font-size':11, 'font-family':'JetBrains Mono'}, gZones); s.textContent = z.sub;
+});
+// agents sub-label in SOC
+(() => { const t = el('text', {x:466, y:552, fill:'#7f88a0', 'font-size':11, 'font-family':'Inter'}, gZones); t.textContent = 'n8n AI agents (run on loop)'; })();
+
+function clip(n, dx, dy){ // point on rect border towards (dx,dy)
+  const hw = n.w/2 + 3, hh = n.h/2 + 3;
+  const t = Math.min(dx ? hw/Math.abs(dx) : Infinity, dy ? hh/Math.abs(dy) : Infinity);
+  return [n.cx + dx*t, n.cy + dy*t];
+}
+const edgeEls = [];
+E.forEach(([a,b,label,flows,st]) => {
+  const A = byId[a], B = byId[b]; if (!A || !B) return;
+  const dx = B.cx - A.cx, dy = B.cy - A.cy;
+  const [x1,y1] = clip(A, dx, dy), [x2,y2] = clip(B, -dx, -dy);
+  const len = Math.hypot(x2-x1, y2-y1) || 1;
+  const flat = Math.abs(dy) < 30 && Math.abs(dx) > 200;   // same row, other nodes in between: arc over them
+  const bend = flat ? Math.min(130, len*0.3) * (dx > 0 ? -1 : 1) : Math.min(40, len*0.12);
+  const mx = (x1+x2)/2 - (y2-y1)/len*bend, my = (y1+y2)/2 + (x2-x1)/len*bend;
+  const p = el('path', {d:`M${x1},${y1} Q${mx},${my} ${x2},${y2}`, class:'edge', 'marker-end':'url(#ar-def)'}, gEdges);
+  const status = st || 'live';
+  if (status !== 'live') p.setAttribute('stroke-dasharray', STATUS[status].dash || '5 4');
+  // label position at t=0.5 on the quad curve
+  const lx = 0.25*x1 + 0.5*mx + 0.25*x2, ly = 0.25*y1 + 0.5*my + 0.25*y2;
+  edgeEls.push({a, b, label, flows, status, p, lx, ly});
+});
+
+const nodeEls = {};
+N.forEach(n => {
+  const g = el('g', {class:'node', tabindex:0, role:'button', 'aria-label': n.label + ' — ' + STATUS[n.s].label}, gNodes);
+  const st = STATUS[n.s];
+  el('rect', {class:'card', x:n.x, y:n.y, width:n.w, height:n.h, rx:12, fill:'#121828', stroke:st.hex, 'stroke-width':1.6, 'stroke-dasharray':st.dash, 'stroke-opacity': n.s==='live'?0.55:0.9}, g);
+  el('rect', {x:n.x, y:n.y+10, width:3.5, height:n.h-20, rx:2, fill:st.hex}, g);
+  if (n.vertical){
+    const t = el('text', {x:n.cx, y:n.cy-10, 'text-anchor':'middle', fill:'#eef1f8', 'font-size':15, 'font-weight':600, 'font-family':'Inter', transform:`rotate(-90 ${n.cx} ${n.cy})`}, g); t.textContent = n.label + ' firewall';
+    const s = el('text', {x:n.cx, y:n.cy+12, 'text-anchor':'middle', fill:'#8a93a8', 'font-size':11, 'font-family':'Inter', transform:`rotate(-90 ${n.cx} ${n.cy})`}, g); s.textContent = 'Suricata · WireGuard · fw-apply';
+  } else {
+    const t = el('text', {x:n.x+14, y:n.y + (n.h>60?27:24), fill:'#eef1f8', 'font-size': n.w<130?12.5:14, 'font-weight':600, 'font-family':'Inter'}, g); t.textContent = n.label;
+    const s = el('text', {x:n.x+14, y:n.y + (n.h>60?46:42), fill:'#8a93a8', 'font-size':11, 'font-family':'Inter'}, g); s.textContent = n.sub;
+    if (n.ip && n.w >= 160){ const ip = el('text', {x:n.x+n.w-10, y:n.y+n.h-9, 'text-anchor':'end', fill:'#5b6479', 'font-size':9.5, 'font-family':'JetBrains Mono'}, g); ip.textContent = n.ip.split(' ')[0]; }
+  }
+  g.addEventListener('click', () => selectNode(n.id));
+  g.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' '){ e.preventDefault(); selectNode(n.id);} });
+  g.addEventListener('mousemove', e => showTip(e, `<b>${n.label}</b> · <span style="color:${st.hex}">${st.label}</span><br>${n.sub}`));
+  g.addEventListener('mouseleave', hideTip);
+  nodeEls[n.id] = g;
+});
+
+// ---------- state ----------
+let activeFlow = null, activeNode = null, activePhase = null;
+const shown = {live:true, progress:true, planned:true, future:true};
+
+function clearLabels(){ while (gLabels.firstChild) gLabels.removeChild(gLabels.firstChild); }
+function addLabel(e, color){
+  if (!e.label) return;
+  const w = e.label.length*5.9 + 12;
+  el('rect', {x:e.lx - w/2, y:e.ly - 9, width:w, height:17, rx:8, class:'elabel-bg', stroke: color||'#2c3550'}, gLabels);
+  const t = el('text', {x:e.lx, y:e.ly+3.5, 'text-anchor':'middle', class:'elabel'}, gLabels); t.textContent = e.label;
+}
+
+function render(){
+  clearLabels();
+  const flow = FLOWS.find(f => f.id === activeFlow);
+  let litNodes = null;
+  if (flow){ litNodes = new Set(); edgeEls.forEach(e => { if (e.flows.includes(flow.id)) { litNodes.add(e.a); litNodes.add(e.b); } }); }
+  if (activeNode){ litNodes = new Set([activeNode]); edgeEls.forEach(e => { if (e.a===activeNode || e.b===activeNode) { litNodes.add(e.a); litNodes.add(e.b); } }); }
+  if (activePhase){ litNodes = new Set(N.filter(n => n.ph === activePhase).map(n => n.id)); }
+
+  N.forEach(n => {
+    const visible = shown[n.s];
+    const dim = !visible || (litNodes && !litNodes.has(n.id));
+    nodeEls[n.id].classList.toggle('faded', dim);
+    nodeEls[n.id].style.display = '';
+  });
+  edgeEls.forEach(e => {
+    const endsVisible = shown[byId[e.a].s] && shown[byId[e.b].s] && shown[e.status];
+    let hot = false, color = null;
+    if (flow && e.flows.includes(flow.id)) { hot = true; color = flow.color; }
+    if (activeNode && (e.a===activeNode || e.b===activeNode)) { hot = true; color = '#e2e8f0'; }
+    if (activePhase && byId[e.a].ph===activePhase && byId[e.b].ph===activePhase) { hot = true; color = '#c084fc'; }
+    const anyFocus = flow || activeNode || activePhase;
+    e.p.classList.toggle('hot', hot);
+    e.p.classList.toggle('anim', hot);
+    e.p.style.stroke = hot ? color : (e.status!=='live' ? STATUS[e.status].hex : '');
+    e.p.style.opacity = !endsVisible ? 0.05 : (anyFocus ? (hot ? 1 : 0.07) : (e.status==='live' ? 0.55 : 0.45));
+    const mk = hot ? (flow && e.flows.includes(flow.id) ? flow.id : 'def') : (e.status!=='live' ? 's'+e.status : 'def');
+    e.p.setAttribute('marker-end', `url(#ar-${mk})`);
+    if (hot && endsVisible) addLabel(e, color);
+  });
+  document.querySelectorAll('#flowBtns .chip').forEach(b => b.classList.toggle('on', b.dataset.id === activeFlow));
+  document.querySelectorAll('.phase').forEach(p => p.classList.toggle('on', p.dataset.id === activePhase));
+}
+
+// ---------- panel ----------
+const panel = document.getElementById('panel');
+function badge(s){ const st = STATUS[s]; return `<span class="badge" style="color:${st.hex};border-color:${st.hex}55">${st.label}</span>`; }
+function phaseName(id){ const p = PHASES.find(p => p.id===id); return p ? p.t : id; }
+
+function overview(){
+  const legend = Object.entries(STATUS).map(([k,v]) => `<div class="conn"><span class="dot" style="background:${v.hex}"></span> <b>${v.label}</b> ${k==='live'?'— running today':k==='progress'?'— being set up now':k==='planned'?'— on the roadmap (dashed)':'— later phases (dotted)'}</div>`).join('');
+  panel.innerHTML = `
+    <div class="kicker">Overview</div>
+    <h2>How the lab fits together</h2>
+    <p>A Proxmox homelab split into zones by OPNsense. Endpoints feed <b>Wazuh</b>; AI agents on <b>loop</b> turn new CVEs into detections, test them with real attacks and grade them; the <b>ops01</b> Claude Code agent operates the lab behind guardrails; results land in Discord and GitHub, and later in the cloud, a public feed and other SIEMs.</p>
+    ${legend}
+    <p class="hint" style="margin-top:14px">Click a box for details and its connections · pick a flow above to watch data move · click a roadmap phase below to see what it adds.</p>
+    <div class="kicker" style="margin-top:16px">Today's headline</div>
+    <ul>
+      <li>ops01 agent reads every machine with no admin rights</li>
+      <li>SOC firewall hardened by the agent (14 explicit flows)</li>
+      <li>Wazuh watches the agent: blocked action = level-10 alert</li>
+      <li>Next: Wazuh agents everywhere → golden template → office02</li>
+    </ul>`;
+}
+
+function selectNode(id){
+  activeFlow = null; activePhase = null;
+  activeNode = activeNode === id ? null : id;
+  if (!activeNode){ overview(); render(); return; }
+  const n = byId[id];
+  const outs = edgeEls.filter(e => e.a===id), ins = edgeEls.filter(e => e.b===id);
+  const line = (e, dir) => `<div class="conn">${dir==='out'?'→':'←'} <b>${byId[dir==='out'?e.b:e.a].label}</b>${e.label?` <span style="color:var(--muted)">· ${e.label}</span>`:''}${e.status!=='live'?' '+badge(e.status):''}</div>`;
+  panel.innerHTML = `
+    <div class="kicker">${(ZONES.find(z=>z.id===n.z)||{title:'Firewall'}).title}</div>
+    <h2>${n.label}</h2>
+    <div style="margin:6px 0 4px">${badge(n.s)}<span class="hint">${phaseName(n.ph)}</span></div>
+    <p>${n.role}</p>
+    <div class="kv">
+      ${n.ip ? `<div>Address</div><div class="mono">${n.ip}</div>` : ''}
+      <div>Does</div><div>${n.sub}</div>
+      ${n.extra ? `<div>Note</div><div>${n.extra}</div>` : ''}
+    </div>
+    ${outs.length ? `<div class="kicker" style="margin-top:12px">Sends to</div>${outs.map(e=>line(e,'out')).join('')}` : ''}
+    ${ins.length ? `<div class="kicker" style="margin-top:12px">Receives from</div>${ins.map(e=>line(e,'in')).join('')}` : ''}
+    <p class="hint" style="margin-top:14px">Click it again (or empty space) to reset.</p>`;
+  render();
+}
+
+function selectFlow(id){
+  activeNode = null; activePhase = null;
+  activeFlow = activeFlow === id ? null : id;
+  if (!activeFlow){ overview(); render(); return; }
+  const f = FLOWS.find(f => f.id===id);
+  panel.innerHTML = `<div class="kicker">Flow</div><h2 style="color:${f.color}">${f.t}</h2><ol class="steps">${f.steps.map(s=>`<li>${s}</li>`).join('')}</ol><p class="hint">Animated arrows on the map follow this flow. Dashed = planned.</p>`;
+  render();
+}
+
+function selectPhase(id){
+  activeNode = null; activeFlow = null;
+  activePhase = activePhase === id ? null : id;
+  if (!activePhase){ overview(); render(); return; }
+  const p = PHASES.find(p => p.id===id); const parts = N.filter(n => n.ph===id);
+  panel.innerHTML = `<div class="kicker">Roadmap</div><h2>${p.t}</h2><p>${p.d}</p><div class="kicker" style="margin-top:12px">Parts (${parts.length})</div>${parts.map(n=>`<div class="conn">${badge(n.s)}<b>${n.label}</b> <span style="color:var(--muted)">· ${n.sub}</span></div>`).join('')}`;
+  render();
+}
+
+svg.addEventListener('click', e => { if (e.target === svg || e.target.parentNode === gZones) { activeNode = activeFlow = activePhase = null; overview(); render(); } });
+
+// ---------- toolbar, stats, phases ----------
+const fb = document.getElementById('flowBtns');
+FLOWS.forEach(f => { const b = document.createElement('button'); b.className='chip'; b.dataset.id=f.id; b.innerHTML = `<span class="dot" style="background:${f.color}"></span>${f.t}`; b.onclick = () => selectFlow(f.id); fb.appendChild(b); });
+const sb = document.getElementById('statusBtns');
+Object.entries(STATUS).forEach(([k,v]) => { const b = document.createElement('button'); b.className='chip'; b.innerHTML = `<span class="dot" style="background:${v.hex}"></span>${v.label}`; b.onclick = () => { shown[k] = !shown[k]; b.classList.toggle('off', !shown[k]); render(); }; sb.appendChild(b); });
+
+const counts = {}; N.forEach(n => counts[n.s] = (counts[n.s]||0)+1);
+document.getElementById('stats').innerHTML = Object.entries(STATUS).map(([k,v]) => `<div class="stat"><b style="color:${v.hex}">${counts[k]||0}</b>${v.label}</div>`).join('') + `<div class="stat"><b>${FLOWS.length}</b>flows</div>`;
+
+const pr = document.getElementById('phaseRow');
+PHASES.forEach(p => {
+  const parts = N.filter(n => n.ph===p.id); const live = parts.filter(n => n.s==='live').length; const prog = parts.filter(n => n.s==='progress').length;
+  const pct = parts.length ? Math.round((live + prog*0.5)/parts.length*100) : 0;
+  const d = document.createElement('div'); d.className='phase'; d.dataset.id=p.id; d.tabIndex=0;
+  d.innerHTML = `<div class="t">${p.t}</div><div class="d">${p.d}</div><div class="bar"><i style="width:${pct}%;background:${pct===100?'#34d399':pct>0?'#fbbf24':'#3b4660'}"></i></div>`;
+  d.onclick = () => selectPhase(p.id); d.onkeydown = e => { if (e.key==='Enter') selectPhase(p.id); };
+  pr.appendChild(d);
+});
+
+// ---------- tooltip ----------
+const tip = document.getElementById('tip');
+function showTip(e, html){ tip.innerHTML = html; tip.style.display='block'; tip.style.left = Math.min(e.clientX+14, innerWidth-280)+'px'; tip.style.top = (e.clientY+14)+'px'; }
+function hideTip(){ tip.style.display='none'; }
+
+overview(); render();
+</script>
+</body>
+</html>

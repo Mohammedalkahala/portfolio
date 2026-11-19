@@ -7,26 +7,29 @@
 <meta name="description" content="{{description}}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Schibsted+Grotesk:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{root}}css/site.css">
 </head>
 <body>
 <a class="skip" href="#main">Skip to content</a>
 <header class="site-head">
-  <a class="brand" href="{{root}}">{{name}}</a>
-  <nav aria-label="Main">
-    <a href="{{root}}#lab">The lab</a>
-    <a href="{{root}}#detections">Detections</a>
-    <a href="{{root}}#experience">Experience</a>
-    <a href="{{root}}writeups/">Writing</a>
-    <a href="{{root}}#contact">Contact</a>
-  </nav>
+  <div>
+    <a class="brand" href="{{root}}#me"><span>Mohammed</span> Alkahala</a>
+    <nav class="tabs" aria-label="Sections">
+      <a href="{{root}}#me" data-tab="me">Me</a>
+      <a href="{{root}}#lab" data-tab="lab">The lab</a>
+      <a href="{{root}}#agents" data-tab="agents">Agents</a>
+      <a href="{{root}}#detections" data-tab="detections">Detections</a>
+      <a href="{{root}}#writing" data-tab="writing">Writing</a>
+      <a href="{{root}}#about" data-tab="about">About</a>
+    </nav>
+  </div>
 </header>
 <main id="main">
 {{content}}
 </main>
 <footer class="site-foot">
-  <p>{{name}}</p>
+  <p>{{name}} — detection engineering &amp; threat hunting</p>
   <p class="foot-links">{{contact_links}}</p>
 </footer>
 </body>

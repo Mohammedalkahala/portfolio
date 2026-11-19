@@ -18,6 +18,7 @@ ROOT = pathlib.Path(__file__).parent
 OUT = ROOT / "_site"
 CFG = json.loads((ROOT / "config.json").read_text())
 TPL = {p.stem: p.read_text() for p in (ROOT / "templates").glob("*.html")}
+LAB_DIAGRAM = (ROOT / "templates" / "_lab_diagram.svg").read_text()
 
 
 def fill(tpl, **vals):
@@ -38,7 +39,9 @@ def contact_links():
     if CFG.get("linkedin"):
         links.append(("LinkedIn", CFG["linkedin"]))
     if CFG.get("email"):
-        links.append(("Email", "mailto:" + CFG["email"]))
+        links.append((CFG["email"], "mailto:" + CFG["email"]))
+    if CFG.get("phone"):
+        links.append((CFG["phone"], "tel:+1" + CFG["phone"].replace("-", "")))
     if CFG.get("resume_pdf"):
         links.append(("Résumé (PDF)", CFG["resume_pdf"]))
     return " ".join(f'<a href="{esc(u)}">{n}</a>' for n, u in links if u)
@@ -112,9 +115,12 @@ def build():
                   if CFG.get("resume_pdf") else "")
     home = fill(TPL["home"], root="", role=esc(CFG["role"]), repo=esc(CFG["repo"]),
                 linkedin=esc(CFG["linkedin"]), github=esc(CFG["github"]), resume_btn=resume_btn,
+                email=esc(CFG.get("email", "")), phone=esc(CFG.get("phone", "")),
+                phone_tel="+1" + CFG.get("phone", "").replace("-", ""),
                 latest_title=esc(latest["title"]),
                 latest_source=esc(latest["source"]), latest_date=long_date(latest["date"]),
-                detection_rows="\n".join(det_rows), contribution_rows=con_rows, writeup_rows=wu_rows)
+                detection_rows="\n".join(det_rows), contribution_rows=con_rows, writeup_rows=wu_rows,
+                lab_diagram=LAB_DIAGRAM)
     page("index.html", f"{CFG['name']} — detection engineering & home SOC", CFG["role"], home, 0)
 
     # About
